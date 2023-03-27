@@ -4,6 +4,8 @@ import Player from "./player";
 import cyberpunkConfigJson from "../../assets/animations/cyberpunk.json";
 import slimeConfigJson from "../../assets/animations/slime.json";
 import AnimationLoader from "../utils/animation-loader";
+import Character from "./character";
+import Vector2 from 'phaser/src/math/Vector2'
 
 
 export default class CharacterFactory {
@@ -42,9 +44,8 @@ export default class CharacterFactory {
                 if (params.player)
                     return this.buildPlayerCharacter(spriteSheetName, x, y);
                 else{
-                    // todo: Add NPC
+                    return this.buildNonPlayerCharacter(spriteSheetName, x, y);
                 }
-                break
             case "slime":
                 return this.buildSlime(x, y, params);
         }
@@ -55,10 +56,20 @@ export default class CharacterFactory {
         character.maxSpeed = 100;
         character.setCollideWorldBounds(true);
         character.cursors = this.scene.input.keyboard.createCursorKeys();
-        character.animationSets = this.animationLibrary.get('aurora');
+        character.animationSets = this.animationLibrary.get(spriteSheetName);
         return character;
 
     }
+
+    buildNonPlayerCharacter(spriteSheetName, x, y) {
+        let character = new Character(this.scene, x, y, spriteSheetName, 2);
+        character.maxSpeed = 100;
+        character.setCollideWorldBounds(true);
+        character.animationSets = this.animationLibrary.get(spriteSheetName);
+        character.speed = new Vector2(0.5, 0.5);
+        return character;
+    }
+
 
     buildSlime(x, y, params) {
         const slimeType = params.slimeType || 0;
@@ -68,6 +79,7 @@ export default class CharacterFactory {
         slime.speed = 40;
         return slime;
     }
+
     slimeNumberToName(n)
     {
         switch (n) {

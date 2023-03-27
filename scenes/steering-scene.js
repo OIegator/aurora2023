@@ -1,30 +1,33 @@
-import EasyStar from "easystarjs";
+import EasyStar from 'easystarjs';
 
-import tilemapPng from '../assets/tileset/Dungeon_Tileset.png'
-import dungeonRoomJson from '../assets/dungeon_room.json'
-import auroraSpriteSheet from '../assets/sprites/characters/aurora.png'
-import punkSpriteSheet from '../assets/sprites/characters/punk.png'
-import blueSpriteSheet from '../assets/sprites/characters/blue.png'
-import yellowSpriteSheet from '../assets/sprites/characters/yellow.png'
-import greenSpriteSheet from '../assets/sprites/characters/green.png'
-import slimeSpriteSheet from '../assets/sprites/characters/slime.png'
+import tilemapPng from '../assets/tileset/Dungeon_Tileset.png';
+import dungeonRoomJson from '../assets/dungeon_room.json';
+import auroraSpriteSheet from '../assets/sprites/characters/aurora.png';
+import punkSpriteSheet from '../assets/sprites/characters/punk.png';
+import blueSpriteSheet from '../assets/sprites/characters/blue.png';
+import yellowSpriteSheet from '../assets/sprites/characters/yellow.png';
+import greenSpriteSheet from '../assets/sprites/characters/green.png';
+import slimeSpriteSheet from '../assets/sprites/characters/slime.png';
 import CharacterFactory from "../src/characters/character_factory";
 
-let StartingScene = new Phaser.Class({
+import Vector2 from 'phaser/src/math/Vector2'
+import {Pursuit} from '../src/ai/steerings/pursuit';
+import {Evade} from '../src/ai/steerings/evade';
+
+let SteeringScene = new Phaser.Class({
 
     Extends: Phaser.Scene,
 
-    initialize: function StartingScene() {
-        Phaser.Scene.call(this, {key: 'StartingScene'});
+    initialize: function SteeringScene() {
+        Phaser.Scene.call(this, {key: 'SteeringScene'});
     },
 
     characterFrameConfig: {frameWidth: 31, frameHeight: 31},
     slimeFrameConfig: {frameWidth: 32, frameHeight: 32},
     preload: function () {
-
         //loading map tiles and json with positions
-        this.load.image("tiles", tilemapPng);
-        this.load.tilemapTiledJSON("map", dungeonRoomJson);
+        this.load.image('tiles', tilemapPng);
+        this.load.tilemapTiledJSON('map', dungeonRoomJson);
 
         //loading spitesheets
         this.load.spritesheet('aurora', auroraSpriteSheet, this.characterFrameConfig);
@@ -36,26 +39,27 @@ let StartingScene = new Phaser.Class({
     },
 
     create: function () {
-
         this.gameObjects = [];
-        const map = this.make.tilemap({key: "map"});
+
+        this.tileSize = 32;
+        this.steerings = [];
+
+        const map = this.make.tilemap({key: 'map'});
 
         // Parameters are the name you gave the tileset in Tiled and then the key of the tileset image in
         // Phaser's cache (i.e. the name you used in preload)
-        const tileset = map.addTilesetImage("Dungeon_Tileset", "tiles");
-
+        const tileset = map.addTilesetImage('Dungeon_Tileset', 'tiles');
 
         // Parameters: layer name (or index) from Tiled, tileset, x, y
-        map.createStaticLayer("Floor", tileset, 0, 0);
-        const worldLayer = map.createStaticLayer("Walls", tileset, 0, 0);
-        const aboveLayer = map.createStaticLayer("Upper", tileset, 0, 0);
-        this.tileSize = 32;
+        map.createLayer('Floor', tileset, 0, 0);
+        const worldLayer = map.createLayer('Walls', tileset, 0, 0);
+        const aboveLayer = map.createLayer('Upper', tileset, 0, 0);
 
         // Setup for A-star
         this.finder = new EasyStar.js();
-        let grid = [];
+        const grid = [];
         for (let y = 0; y < worldLayer.tilemap.height; y++) {
-            let col = [];
+            const col = [];
             for (let x = 0; x < worldLayer.tilemap.width; x++) {
                 const tile = worldLayer.tilemap.getTileAt(x, y);
                 col.push(tile ? tile.index : 0);
@@ -74,24 +78,27 @@ let StartingScene = new Phaser.Class({
         this.physics.world.bounds.height = map.heightInPixels;
         this.characterFactory = new CharacterFactory(this);
 
-        // Creating characters
-        this.player = this.characterFactory.buildCharacter('aurora', 100, 100, {player: true});
+        //Creating characters
+        this.player = this.characterFactory.buildCharacter('green', 100, 100, {player: true});
         this.gameObjects.push(this.player);
         this.physics.add.collider(this.player, worldLayer);
 
-        this.slimes = this.physics.add.group();
+        this.NPCs = this.physics.add.group();
         let params = {};
-        for (let i = 0; i < 30; i++) {
+        for (let i = 0; i < 10; i++) {
             const x = Phaser.Math.RND.between(50, this.physics.world.bounds.width - 50);
             const y = Phaser.Math.RND.between(50, this.physics.world.bounds.height - 50);
             params.slimeType = Phaser.Math.RND.between(0, 4);
 
-            const slime = this.characterFactory.buildSlime(x, y, params);
-            this.slimes.add(slime);
-            this.physics.add.collider(slime, worldLayer);
-            this.gameObjects.push(slime);
+            const npc = this.characterFactory.buildNonPlayerCharacter("blue", x, y);
+            npc.setSteerings([
+                new Evade(npc, [this.player], 1, npc.speed, this.player.speed)
+            ]);
+            this.NPCs.add(npc);
+            this.physics.add.collider(npc, worldLayer);
+            this.gameObjects.push(npc);
         }
-        this.physics.add.collider(this.player, this.slimes);
+        this.physics.add.collider(this.player, this.NPCs);
 
         this.input.keyboard.on("keydown_D", event => {
             // Turn on physics debugging to show player's hitbox
@@ -116,4 +123,4 @@ let StartingScene = new Phaser.Class({
     }
 });
 
-export default StartingScene
+export default SteeringScene
