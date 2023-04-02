@@ -25,6 +25,7 @@ class Pursuit extends Steering {
 
         if (isNaN(toTarget.x))
             return [0, 0];
+
         const x = (Math.abs(toTarget.x) < 1) ? 0 : -Math.sign(toTarget.x)*this.ownerSpeed;
         const y = (Math.abs(toTarget.y) < 1) ? 0 : -Math.sign(toTarget.y)*this.ownerSpeed;
 

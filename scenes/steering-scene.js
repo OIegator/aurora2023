@@ -13,6 +13,7 @@ import CharacterFactory from "../src/characters/character_factory";
 import Vector2 from 'phaser/src/math/Vector2'
 import {Pursuit} from '../src/ai/steerings/pursuit';
 import {Evade} from '../src/ai/steerings/evade';
+import {Seek} from '../src/ai/steerings/seek';
 
 let SteeringScene = new Phaser.Class({
 
@@ -53,7 +54,7 @@ let SteeringScene = new Phaser.Class({
         // Parameters: layer name (or index) from Tiled, tileset, x, y
         map.createLayer('Floor', tileset, 0, 0);
         const worldLayer = map.createLayer('Walls', tileset, 0, 0);
-        const aboveLayer = map.createLayer('Upper', tileset, 0, 0);
+     //   const aboveLayer = map.createLayer('Upper', tileset, 0, 0);
 
         // Setup for A-star
         this.finder = new EasyStar.js();
@@ -72,7 +73,7 @@ let SteeringScene = new Phaser.Class({
 
         // Setup for collisions
         worldLayer.setCollisionBetween(1, 500);
-        aboveLayer.setDepth(10);
+        // aboveLayer.setDepth(10);
 
         this.physics.world.bounds.width = map.widthInPixels;
         this.physics.world.bounds.height = map.heightInPixels;
@@ -84,16 +85,15 @@ let SteeringScene = new Phaser.Class({
         this.physics.add.collider(this.player, worldLayer);
 
         this.NPCs = this.physics.add.group();
-        let params = {};
         for (let i = 0; i < 10; i++) {
             const x = Phaser.Math.RND.between(50, this.physics.world.bounds.width - 50);
             const y = Phaser.Math.RND.between(50, this.physics.world.bounds.height - 50);
-            params.slimeType = Phaser.Math.RND.between(0, 4);
 
             const npc = this.characterFactory.buildNonPlayerCharacter("blue", x, y);
             npc.setSteerings([
-                new Evade(npc, [this.player], 1, npc.speed, this.player.speed)
+                new Seek(npc, [this.player], 1, npc.speed, this.player.speed)
             ]);
+            this.physics.add.collider(npc, this.NPCs);
             this.NPCs.add(npc);
             this.physics.add.collider(npc, worldLayer);
             this.gameObjects.push(npc);

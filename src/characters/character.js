@@ -9,12 +9,17 @@ export default class Character extends Phaser.Physics.Arcade.Sprite{
     }
 
     update() {
+        const body = this.body;
+        this.body.setVelocity(0);
         let velocity = new Vector2();
         this.steerings.forEach(steering => velocity.add(steering.calculateImpulse()));
-        let newCoord = velocity.multiply(this.speed);
-        this.x += newCoord.x;
-        this.y += newCoord.y;
+        let target = velocity.multiply(this.speed);
+        this.body.velocity.add(target);
 
+        const speed = this.maxSpeed;
+
+        // Normalize and scale the velocity so that player can't move faster along a diagonal
+        body.velocity.normalize().scale(speed);
         this.updateAnimation();
     }
 
@@ -39,21 +44,6 @@ export default class Character extends Phaser.Physics.Arcade.Sprite{
             }
         }
 
-    }
-    hasArrived()
-    {
-        return this.pointOfInterest === undefined || this.pointOfInterest.distance(this.body.position) < eps;
-    }
-
-    selectNextLocation() {
-        const nextTile = this.path.shift();
-        if (nextTile)
-        {
-            this.nextLocation = new Vector2(nextTile.x * 32, nextTile.y * 32);
-        } else
-        {
-            this.nextLocation = this.body.position;
-        }
     }
 
     setSteerings(steerings){
