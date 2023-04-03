@@ -6,7 +6,7 @@ class Evade extends Steering {
         super(owner, objects, force);
         this.ownerSpeed = ownerSpeed;
         this.targetSpeed = targetSpeed;
-        this.radius = 50;
+        this.radius = 100;
     }
 
     calculateImpulse() {
@@ -17,15 +17,23 @@ class Evade extends Steering {
         const relativeHeading = searcherDirection.dot(targetDirection);
 
         if (toTarget.dot(targetDirection) < 0 || relativeHeading > -0.95) {
-            const predictTime = toTarget.length() / (this.targetSpeed + this.ownerSpeed);
+            const predictTime = toTarget.length() / this.targetSpeed.add(this.ownerSpeed).length();
             toTarget.x += predictTime * targetDirection.x;
             toTarget.y += predictTime * targetDirection.y;
-            if (toTarget.length() < this.radius)
-                toTarget.multiply(new Vector2(-1));
+        }
+
+        this.isTargetWithinRadius = toTarget.length() < this.radius;
+
+        if (!this.isTargetWithinRadius) {
+            return new Vector2(0, 0);
+        }
+
+        if (toTarget.length() < this.radius) {
+            toTarget.multiply(new Vector2(-1));
         }
 
         if (isNaN(toTarget.x))
-            return new Vector2();
+            return [0, 0];
 
         const x = (Math.abs(toTarget.x) < 1) ? 0 : -Math.sign(toTarget.x) * this.ownerSpeed.x;
         const y = (Math.abs(toTarget.y) < 1) ? 0 : -Math.sign(toTarget.y) * this.ownerSpeed.y;

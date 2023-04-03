@@ -18,7 +18,7 @@ class Pursuit extends Steering {
 
         if (toTarget.dot(targetDirection) < 0 || relativeHeading > -0.95)
         {
-            const predictTime = toTarget.length() / (this.targetSpeed + this.ownerSpeed);
+            const predictTime = toTarget.length() / this.targetSpeed.add(this.ownerSpeed).length();
             toTarget.x += predictTime*targetDirection.x;
             toTarget.y += predictTime*targetDirection.y;
         }
@@ -26,12 +26,17 @@ class Pursuit extends Steering {
         if (isNaN(toTarget.x))
             return [0, 0];
 
-        const x = (Math.abs(toTarget.x) < 1) ? 0 : -Math.sign(toTarget.x)*this.ownerSpeed;
-        const y = (Math.abs(toTarget.y) < 1) ? 0 : -Math.sign(toTarget.y)*this.ownerSpeed;
+        const x = (Math.abs(toTarget.x) < 1) ? 0 : -Math.sign(toTarget.x)*this.ownerSpeed.x;
+        const y = (Math.abs(toTarget.y) < 1) ? 0 : -Math.sign(toTarget.y)*this.ownerSpeed.y;
 
         return new Vector2(x, y);
 
     }
+
+    setTarget(target) {
+        this._target = target;
+    }
+
 }
 
 export {Pursuit};

@@ -1,7 +1,7 @@
 import EasyStar from 'easystarjs';
 
 import tilemapPng from '../assets/tileset/Dungeon_Tileset.png';
-import dungeonRoomJson from '../assets/dungeon_room.json';
+import dungeonRoomJson from '../assets/new_dungeon_room.json';
 import auroraSpriteSheet from '../assets/sprites/characters/aurora.png';
 import punkSpriteSheet from '../assets/sprites/characters/punk.png';
 import blueSpriteSheet from '../assets/sprites/characters/blue.png';
@@ -14,6 +14,9 @@ import Vector2 from 'phaser/src/math/Vector2'
 import {Pursuit} from '../src/ai/steerings/pursuit';
 import {Evade} from '../src/ai/steerings/evade';
 import {Seek} from '../src/ai/steerings/seek';
+import {CollisionAvoidance} from "../src/ai/steerings/collision-avoidance";
+import {Wander} from "../src/ai/steerings/wander";
+
 
 let SteeringScene = new Phaser.Class({
 
@@ -54,7 +57,7 @@ let SteeringScene = new Phaser.Class({
         // Parameters: layer name (or index) from Tiled, tileset, x, y
         map.createLayer('Floor', tileset, 0, 0);
         const worldLayer = map.createLayer('Walls', tileset, 0, 0);
-     //   const aboveLayer = map.createLayer('Upper', tileset, 0, 0);
+        //   const aboveLayer = map.createLayer('Upper', tileset, 0, 0);ti
 
         // Setup for A-star
         this.finder = new EasyStar.js();
@@ -81,34 +84,68 @@ let SteeringScene = new Phaser.Class({
 
         //Creating characters
         this.player = this.characterFactory.buildCharacter('green', 100, 100, {player: true});
+        this.player.speed = new Vector2(1);
         this.gameObjects.push(this.player);
         this.physics.add.collider(this.player, worldLayer);
+        //
+        // this.NPCs = this.physics.add.group();
+        // for (let i = 0; i < 4; i++) {
+        //     const x = Phaser.Math.RND.between(50, this.physics.world.bounds.width - 50);
+        //     const y = Phaser.Math.RND.between(50, this.physics.world.bounds.height - 50);
+        //
+        //     const npc = this.characterFactory.buildNonPlayerCharacter("blue", x, y);
+        //     npc.setSteerings([
+        //         //new Evade(npc, [this.player], 2, npc.speed, this.player.speed),
+        //         new CollisionAvoidance(npc, [this.player], 1),
+        //         new Wander(npc, [this.player], 1)
+        //     ]);
+        //     this.physics.add.collider(npc, this.NPCs);
+        //     this.NPCs.add(npc);
+        //     this.physics.add.collider(npc, worldLayer);
+        //     this.gameObjects.push(npc);
+        // }
 
-        this.NPCs = this.physics.add.group();
-        for (let i = 0; i < 10; i++) {
-            const x = Phaser.Math.RND.between(50, this.physics.world.bounds.width - 50);
-            const y = Phaser.Math.RND.between(50, this.physics.world.bounds.height - 50);
+        this.obstacles = this.physics.add.group();
+        for (let i = 0; i < 1; i++) {
+            const x = this.physics.world.bounds.width - 150;
+            const y = this.physics.world.bounds.height - 150;
 
-            const npc = this.characterFactory.buildNonPlayerCharacter("blue", x, y);
-            npc.setSteerings([
-                new Seek(npc, [this.player], 1, npc.speed, this.player.speed)
-            ]);
-            this.physics.add.collider(npc, this.NPCs);
-            this.NPCs.add(npc);
-            this.physics.add.collider(npc, worldLayer);
-            this.gameObjects.push(npc);
+            const obs = this.characterFactory.buildNonPlayerCharacter("blue", x, y);
+            this.obstacles.add(obs)
+            this.gameObjects.push(obs);
         }
-        this.physics.add.collider(this.player, this.NPCs);
 
-        this.input.keyboard.on("keydown_D", event => {
-            // Turn on physics debugging to show player's hitbox
-            this.physics.world.createDebugGraphic();
+        const obs1 = this.characterFactory.buildNonPlayerCharacter("blue", 520, 380);
+        this.obstacles.add(obs1)
+        this.gameObjects.push(obs1);
 
-            const graphics = this.add
-                .graphics()
-                .setAlpha(0.75)
-                .setDepth(20);
-        });
+        const obs2 = this.characterFactory.buildNonPlayerCharacter("blue", 400, 300);
+        this.obstacles.add(obs2)
+        this.gameObjects.push(obs2);
+
+        const yellow = this.characterFactory.buildNonPlayerCharacter(
+            "yellow",
+            this.physics.world.bounds.width - 50,
+            this.physics.world.bounds.height - 50,
+            //50, 50,
+            new Vector2(-1, -1)
+        );
+        yellow.setSteerings([
+            // new Evade(yellow, [this.player], 2, yellow.speed, this.player.speed),
+            new CollisionAvoidance(
+                yellow,
+                this.obstacles.children.entries,
+                1,
+                100,
+                50),
+        ]);
+        this.physics.add.collider(yellow, worldLayer);
+        this.gameObjects.push(yellow);
+
+        //console.log(this.NPCs.children.entries)
+        //this.physics.add.collider(this.player, this.NPCs);
+
+
     },
     update: function () {
         if (this.gameObjects) {

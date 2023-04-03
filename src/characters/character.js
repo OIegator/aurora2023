@@ -1,10 +1,12 @@
 import Vector2 from 'phaser/src/math/Vector2'
+
 const eps = 20;
-export default class Character extends Phaser.Physics.Arcade.Sprite{
-    constructor(scene, x, y, name, frame) {
+export default class Character extends Phaser.Physics.Arcade.Sprite {
+    constructor(scene, x, y, name, frame, velocity = null) {
         super(scene, x, y, name, frame);
         scene.physics.world.enable(this);
         scene.add.existing(this);
+        this.velocity = velocity;
         this.steerings = [];
     }
 
@@ -12,12 +14,18 @@ export default class Character extends Phaser.Physics.Arcade.Sprite{
         const body = this.body;
         this.body.setVelocity(0);
         let velocity = new Vector2();
+        if (this.velocity) {
+            velocity.add(this.velocity);
+            let target = velocity.multiply(this.speed);
+            this.body.velocity.add(target);
+        }
+
         this.steerings.forEach(steering => velocity.add(steering.calculateImpulse()));
         let target = velocity.multiply(this.speed);
         this.body.velocity.add(target);
 
-        const speed = this.maxSpeed;
 
+        const speed = this.maxSpeed;
         // Normalize and scale the velocity so that player can't move faster along a diagonal
         body.velocity.normalize().scale(speed);
         this.updateAnimation();
@@ -46,7 +54,7 @@ export default class Character extends Phaser.Physics.Arcade.Sprite{
 
     }
 
-    setSteerings(steerings){
+    setSteerings(steerings) {
         this.steerings = steerings;
     }
 }

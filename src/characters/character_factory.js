@@ -61,8 +61,8 @@ export default class CharacterFactory {
 
     }
 
-    buildNonPlayerCharacter(spriteSheetName, x, y) {
-        let character = new Character(this.scene, x, y, spriteSheetName, 2);
+    buildNonPlayerCharacter(spriteSheetName, x, y, velocity = null) {
+        let character = new Character(this.scene, x, y, spriteSheetName, 2, velocity);
         character.maxSpeed = 100;
         character.setCollideWorldBounds(true);
         character.animationSets = this.animationLibrary.get(spriteSheetName);
